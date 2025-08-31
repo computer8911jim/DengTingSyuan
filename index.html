@@ -386,7 +386,7 @@
                     <div class="file-input-wrapper" id="fileInputWrapper">
                         <input type="file" id="photoUpload" name="photoUpload" accept="image/*" multiple>
                         <div class="upload-icon">📷</div>
-                        <div>點擊選擇照片或拖拽照片到這裡</div>
+                        <div>點擊選擇照片或拖曳照片到這裡</div>
                         <div style="font-size: 12px; color: #666; margin-top: 5px;">支援 JPG, PNG 格式，可選擇多張照片</div>
                     </div>
                 </div>
@@ -418,29 +418,23 @@
     </div>
 
     <script>
-        let uploadedPhotos = [];
-        
         // **重要**：請將此 URL 替換成您重新部署 Google Apps Script 後取得的新網址
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzEC2grQVwFUyOqYlpqZwkyPdfwP-BbQ7-xj8_K1k4mab7-H_J86rS2j6AFvz-plRbF/exec';
 
         async function submitForm() {
-            // 取得表單資料
             const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
             const problemType = document.getElementById('problemType').value;
             const description = document.getElementById('description').value.trim();
             const customerName = document.getElementById('customerName').value.trim();
             const customerPhone = document.getElementById('customerPhone').value.trim();
             
-            // 驗證必填欄位
             if (!vehicleNumber || !problemType || !description) {
                 showError('請填寫所有必填欄位（車號、問題類型、問題描述）');
                 return;
             }
 
-            // 顯示載入狀態
             showLoading();
 
-            // 建立 FormData 物件來包裝所有資料，包括檔案
             const formData = new FormData();
             formData.append('vehicleNumber', vehicleNumber.toUpperCase());
             formData.append('problemType', problemType);
@@ -448,7 +442,6 @@
             formData.append('customerName', customerName || '未提供');
             formData.append('customerPhone', customerPhone || '未提供');
             
-            // 將所有上傳的照片檔案加入 FormData
             const photoInput = document.getElementById('photoUpload');
             if (photoInput.files.length > 0) {
                 for (const file of photoInput.files) {
@@ -457,7 +450,6 @@
             }
 
             try {
-                // 使用 fetch API 發送 POST 請求
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     body: formData
@@ -520,7 +512,6 @@
             document.getElementById('customerPhone').value = '';
             document.getElementById('photoUpload').value = '';
             
-            uploadedPhotos = [];
             document.getElementById('previewContainer').innerHTML = '';
             document.getElementById('previewContainer').style.display = 'none';
         }
@@ -530,9 +521,8 @@
             const files = e.target.files;
             const previewContainer = document.getElementById('previewContainer');
             
-            // 清除現有的預覽，以免重複
+            // 清除現有的預覽
             previewContainer.innerHTML = '';
-            uploadedPhotos = [];
             
             if (files.length > 0) {
                 previewContainer.style.display = 'grid';
@@ -552,11 +542,6 @@
                             <button type="button" class="remove-photo" data-filename="${file.name}">×</button>
                         `;
                         previewContainer.appendChild(previewItem);
-                        
-                        uploadedPhotos.push({
-                            name: file.name,
-                            data: e.target.result
-                        });
                     };
                     reader.readAsDataURL(file);
                 });
@@ -565,7 +550,7 @@
             }
         });
 
-        // 移除照片功能 (改用事件委託)
+        // 移除照片功能 (使用事件委託)
         document.getElementById('previewContainer').addEventListener('click', function(e) {
             if (e.target.classList.contains('remove-photo')) {
                 const fileNameToRemove = e.target.dataset.filename;
@@ -578,10 +563,8 @@
                     
                 photoInput.files = dataTransfer.files;
                 
-                // 移除 DOM 元素
                 e.target.parentElement.remove();
                 
-                // 如果沒有照片，隱藏預覽區
                 if (photoInput.files.length === 0) {
                     document.getElementById('previewContainer').style.display = 'none';
                 }
@@ -624,24 +607,15 @@
             document.getElementById('imageModal').style.display = 'none';
         }
 
-        // 點擊模態框背景關閉
         document.getElementById('imageModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeModal();
             }
         });
 
-        // 車號自動轉大寫
         document.getElementById('vehicleNumber').addEventListener('input', function(e) {
             e.target.value = e.target.value.toUpperCase();
-        });
-
-        // 頁面載入時測試連線
-        window.addEventListener('load', function() {
-            console.log('RAC 客訴表單已載入');
-            // 由於 POST 請求的測試方式不同，此處不再自動測試連線
         });
     </script>
 </body>
 </html>
-
