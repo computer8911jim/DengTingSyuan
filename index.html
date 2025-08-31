@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAC 客戶服務意見反映表</title>
     <style>
-        /* 您的 CSS 樣式維持不變，設計得很好 */
+        /* CSS 樣式維持不變 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .container { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 20px; box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1); padding: 40px; width: 100%; max-width: 600px; position: relative; overflow: hidden; }
@@ -88,10 +88,105 @@
     </div>
 
     <script>
-        // 🚨 步驟二：請將此處替換為您「全新部署」後取得的 Google Apps Script URL
+        // 🚨 步驟一：請務必將此處替換為您「全新部署」後取得的 Google Apps Script URL
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxI94SOUkYoK7mXqZnK5gO_VTMBAfAKWC-hBh4EaaNF5mR4MrHwkifegXBAqeR66_SE/exec';
 
+        // ==========================================================
+        // == 這是您點擊按鈕時要執行的主要函式 (現在是完整的了！) ==
+        // ==========================================================
         async function submitForm() {
             // 1. 獲取所有表單欄位的值
-// ... existing code ... -->
+            const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
+            const problemType = document.getElementById('problemType').value;
+            const description = document.getElementById('description').value.trim();
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            const photoCount = document.getElementById('photoUpload').files.length;
+            
+            // 2. 前端基本驗證
+            if (!vehicleNumber || !problemType || !description) {
+                showError('請填寫所有必填欄位（車號、問題類型、問題描述）');
+                return;
+            }
+            
+            // 檢查 URL 是否已填寫
+            if (GOOGLE_SCRIPT_URL === '貼上您從 Google Apps Script 複製的全新網址') {
+                 showError('前端程式碼錯誤：請先在 HTML 的 <script> 標籤中填上您的 Google Apps Script 網址！');
+                 return;
+            }
+
+            showLoading();
+
+            // 3. 組合所有資料成一個 URL 查詢字串
+            const params = new URLSearchParams({
+                action: 'submitComplaint',
+                dateTime: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+                vehicleNumber: vehicleNumber.toUpperCase(),
+                problemType: problemType,
+                description: description,
+                customerName: customerName,
+                customerPhone: customerPhone,
+                photoCount: photoCount,
+                status: '待處理'
+            });
+
+            // 4. 使用 GET 方法發送 fetch 請求
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?${params.toString()}`);
+                const resultText = await response.text();
+                
+                hideLoading();
+
+                if (resultText.startsWith('SUCCESS')) {
+                    showSuccess('✅ 意見反映已成功提交！感謝您的寶貴意見。');
+                    resetForm();
+                } else {
+                    console.error('後端錯誤:', resultText);
+                    showError(`提交失敗，請重試。錯誤訊息: ${resultText}`);
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('網路請求錯誤:', error);
+                showError('提交失敗，請檢查網路連線後重試。');
+            }
+        }
+
+        // ==========================================================
+        // == 以下是控制 UI 顯示的輔助函式 (用來顯示載入中/成功/失敗) ==
+        // ==========================================================
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function resetForm() {
+            document.getElementById('vehicleNumber').value = '';
+            document.getElementById('problemType').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('photoUpload').value = '';
+        }
+    </script>
+</body>
+</html>
 
